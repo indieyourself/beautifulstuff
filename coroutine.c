@@ -3,6 +3,7 @@
 	https://gist.github.com/indieyourself/9c6a0b37b58d9d8d457c8c9ee06b2613
 	
 	http://blog.csdn.net/qq910894904/article/details/41911175
+	http://blog.csdn.net/kobejayandy/article/details/41779837
 
 	gcc -W coroutine.c -o coroutine
 */
@@ -44,7 +45,7 @@ Coroutine *createCoroutine( Handler callback, void *env, Coroutine *ret) {
 	coroutine -> env = env;
 	coroutine -> state = 0;
 
-	makecontext( coroutine->context, coroutine->f, 1, coroutine->env);
+	makecontext( coroutine->context, coroutine->f, 0);
 
 	return coroutine;
 }
@@ -105,6 +106,10 @@ void scheduler( void ) {
 	}
 }
 
+void schedule() {
+	enqueue(gqueue , gcurrent);
+	swapcontext( gcurrent->context, gmain->context);
+}
 
 void init() {
 	gqueue = createQueue();
@@ -126,14 +131,14 @@ struct H1 {
 
 void printH1( ) {
 	puts("H1");
-	int *i =  &(( struct H1 *)(gcurrent->env) )->count;
+	//int *i =  &(( struct H1 *)(gcurrent->env) )->count;
 	
-	while ( *i< 3) {
-		printf("%s %d\n", "H1", *i);
-		++*i ;
+	int i = 0;
+	while ( i< 3) {
+		printf("%s %d\n", "H1", i);
+		++i ;
 
-		enqueue(gqueue , gcurrent);
-		swapcontext( gcurrent->context, gmain->context);
+		schedule();
 	}
 
 	puts("after a while");
@@ -144,6 +149,8 @@ void printH2(  ) {
 	int i = 0;
 	for( i = 0; i < 3; ++i) {
 		printf("%s %d\n", "H2", i);
+
+		schedule();
 	}
 }
 
